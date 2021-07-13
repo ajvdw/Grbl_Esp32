@@ -31,9 +31,9 @@ namespace Machine {
     }
 
     void Endstops::group(Configuration::HandlerBase& handler) {
-        //     handler.item("positive", _positive);
-        //     handler.item("negative", _negative);
-        handler.item("dual", _dual);
+        handler.item("limit-", _limitMin);
+        handler.item("limit+", _limitMax);
+        handler.item("limit+-", _limitAll);
         handler.item("hard_limits", _hardLimits);
     }
 }

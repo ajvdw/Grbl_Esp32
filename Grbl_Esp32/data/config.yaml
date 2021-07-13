@@ -21,7 +21,7 @@ axes:
     acceleration: 25
     max_travel: 1000
     homing:
-      cycle: -1
+      cycle: 2
       mpos: 10
       positive_direction: false
       feed_rate: 50.000
@@ -31,7 +31,7 @@ axes:
     
     gang0:
       endstops:
-        dual: gpio.17:low:pu
+        limit+-: gpio.17:low:pu
         hard_limits: false
       stepstick:
         direction: gpio.14
@@ -45,7 +45,7 @@ axes:
     acceleration: 25
     max_travel: 1000
     homing:
-      cycle: 0
+      cycle: 1
       mpos: 10
       positive_direction: false
       feed_rate: 50.000
@@ -55,7 +55,7 @@ axes:
 
     gang0:
       endstops:
-        dual: gpio.4:low:pu
+        limit+-: gpio.4:low:pu
         hard_limits: false
       stepstick:
         direction: gpio.15
@@ -81,7 +81,7 @@ axes:
 
     gang0:
       endstops:
-        dual: gpio.16:low:pu
+        limit+-: gpio.16:low:pu
         hard_limits: false
       stepstick:
         direction: gpio.33

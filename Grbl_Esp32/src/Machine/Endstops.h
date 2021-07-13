@@ -27,7 +27,9 @@ namespace Machine {
 
         //     Pin  _positive;
         //     Pin  _negative;
-        Pin  _dual;
+        Pin  _limitMin;
+        Pin  _limitMax;
+        Pin  _limitAll;
         bool _hardLimits = false;
 
         // Configuration system helpers:

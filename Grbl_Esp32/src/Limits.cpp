@@ -417,13 +417,13 @@ void limits_init() {
         }
         for (int gang_index = 0; gang_index < 2; gang_index++) {
             auto gangConfig = axes->_axis[axis]->_gangs[gang_index];
-            if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_dual.defined()) {
+            if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_limitAll.defined()) {
                 if (!limitAxes) {
                     info_serial("Initializing endstops...");
                 }
                 bitnum_true(limitAxes, axis);
 
-                Pin& pin = gangConfig->_endstops->_dual;
+                Pin& pin = gangConfig->_endstops->_limitAll;
 
                 info_serial("%s limit on %s", reportAxisNameMsg(axis, gang_index), pin.name().c_str());
 
@@ -458,8 +458,8 @@ void limits_homing_mode() {
     for (int axis = 0; axis < n_axis; axis++) {
         for (int gang_index = 0; gang_index < 2; gang_index++) {
             auto gangConfig = config->_axes->_axis[axis]->_gangs[gang_index];
-            if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_dual.defined()) {
-                Pin& pin = gangConfig->_endstops->_dual;
+            if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_limitAll.defined()) {
+                Pin& pin = gangConfig->_endstops->_limitAll;
                 pin.detachInterrupt();
             }
         }
@@ -471,9 +471,9 @@ void limits_run_mode() {
     for (int axis = 0; axis < n_axis; axis++) {
         for (int gang_index = 0; gang_index < 2; gang_index++) {
             auto gangConfig = config->_axes->_axis[axis]->_gangs[gang_index];
-            if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_dual.defined()) {
+            if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_limitAll.defined()) {
                 if (gangConfig->_endstops->_hardLimits) {
-                    Pin& pin = gangConfig->_endstops->_dual;
+                    Pin& pin = gangConfig->_endstops->_limitAll;
                     pin.attachInterrupt(isr_limit_switches, CHANGE, nullptr);
                 }
             }
@@ -484,8 +484,8 @@ void limits_run_mode() {
 static bool limits_check_axis(int axis) {
     for (int gang_index = 0; gang_index < 2; gang_index++) {
         auto gangConfig = config->_axes->_axis[axis]->_gangs[gang_index];
-        if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_dual.defined()) {
-            Pin& pin = gangConfig->_endstops->_dual;
+        if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_limitAll.defined()) {
+            Pin& pin = gangConfig->_endstops->_limitAll;
             if (pin.read()) {
                 return true;
             }
@@ -600,7 +600,7 @@ bool limitsSwitchDefined(uint8_t axis, uint8_t gang_index) {
     auto gangConfig = config->_axes->_axis[axis]->_gangs[gang_index];
 
     if (gangConfig->_endstops != nullptr) {
-        return gangConfig->_endstops->_dual.defined();
+        return gangConfig->_endstops->_limitAll.defined();
     } else {
         return false;
     }
