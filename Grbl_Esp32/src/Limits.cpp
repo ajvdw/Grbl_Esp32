@@ -74,6 +74,19 @@ void IRAM_ATTR isr_limit_switches(void* /*unused */) {
     }
 }
 
+void attachLimitPin(AxisMask& mask, int axis, int gang_index, const char* name, Pin& pin, bool hard_limit) {
+    if (pin.defined()) {
+        bitnum_true(mask, axis);
+        info_serial("%s %s on %s", reportAxisNameMsg(axis, gang_index), name, pin.name().c_str());
+        pin.setAttr(Pin::Attr::Input | Pin::Attr::ISR);
+        if (hard_limit) {
+            pin.attachInterrupt(isr_limit_switches, CHANGE, nullptr);
+        } else {
+            pin.detachInterrupt();
+        }
+    }
+}
+
 // Returns true if an error occurred
 static ExecAlarm limits_handle_errors(bool approach, uint8_t cycle_mask) {
     // This checks some of the events that would normally be handled
@@ -415,48 +428,49 @@ void limits_init() {
         if (axes->_axis[axis]->_homing) {
             bitnum_true(homingAxes, axis);
         }
+
+        // the endstops at the axis level
+        auto endstops = axes->_axis[axis]->_endstops;
+        if (endstops != nullptr) {
+            attachLimitPin(homingAxes, axis, 0, "axis limit_all", endstops->_limitAll, endstops->_hardLimits);
+            attachLimitPin(homingAxes, axis, 0, "axis limit_pos", endstops->_limitPos, endstops->_hardLimits);
+            attachLimitPin(homingAxes, axis, 0, "axis limit_neg", endstops->_limitNeg, endstops->_hardLimits);
+        }
+
         for (int gang_index = 0; gang_index < 2; gang_index++) {
             auto gangConfig = axes->_axis[axis]->_gangs[gang_index];
-            if (gangConfig->_endstops != nullptr && (gangConfig->_endstops->_limitAll.defined() || gangConfig->_endstops->_limitNeg.defined() ||
-                                                     gangConfig->_endstops->_limitPos.defined())) {
-                if (!limitAxes) {
-                    info_serial("Initializing endstops...");
-                }
-                bitnum_true(limitAxes, axis);
 
-                if (gangConfig->_endstops->_limitAll.defined()) {
-                    Pin& pin = gangConfig->_endstops->_limitAll;
-
-                    info_serial("%s limit_all on %s", reportAxisNameMsg(axis, gang_index), pin.name().c_str());
-
-                    pin.setAttr(Pin::Attr::Input | Pin::Attr::ISR);
-                    if (gangConfig->_endstops->_hardLimits) {
-                        pin.attachInterrupt(isr_limit_switches, CHANGE, nullptr);
-                    } else {
-                        pin.detachInterrupt();
-                    }
-                }
-
-                /// !!! Need to pick up the neg and pos switches
+            auto endstops = gangConfig->_endstops;
+            if (endstops != nullptr) {
+                attachLimitPin(homingAxes, axis, gang_index, "gang limit_all", endstops->_limitAll, endstops->_hardLimits);
+                attachLimitPin(homingAxes, axis, gang_index, "gang limit_pos", endstops->_limitPos, endstops->_hardLimits);
+                attachLimitPin(homingAxes, axis, gang_index, "gang limit_neg", endstops->_limitNeg, endstops->_hardLimits);
             }
-        }
-    }
 
-    if (limitAxes) {
-        if (limit_sw_queue == NULL && config->_softwareDebounceMs != 0) {
-            // setup task used for debouncing
-            if (limit_sw_queue == NULL) {
-                limit_sw_queue = xQueueCreate(10, sizeof(int));
-                xTaskCreate(limitCheckTask,
-                            "limitCheckTask",
-                            2048,
-                            NULL,
-                            5,  // priority
-                            NULL);
-            }
+            // if (gangConfig->_endstops != nullptr && (gangConfig->_endstops->_limitAll.defined() || gangConfig->_endstops->_limitNeg.defined() ||
+            //                                          gangConfig->_endstops->_limitPos.defined())) {
+            //     if (!limitAxes) {
+            //         info_serial("Initializing endstops...");
+            //     }
+            //     bitnum_true(limitAxes, axis);
+
+            //     if (gangConfig->_endstops->_limitAll.defined()) {
+            //         Pin& pin = gangConfig->_endstops->_limitAll;
+
+            //         info_serial("%s limit_all on %s", reportAxisNameMsg(axis, gang_index), pin.name().c_str());
+
+            //         pin.setAttr(Pin::Attr::Input | Pin::Attr::ISR);
+            //         if (gangConfig->_endstops->_hardLimits) {
+            //             pin.attachInterrupt(isr_limit_switches, CHANGE, nullptr);
+            //         } else {
+            //             pin.detachInterrupt();
+            //         }
         }
+
+        /// !!! Need to pick up the neg and pos switches
     }
 }
+
 
 void limits_homing_mode() {
     auto n_axis = config->_axes->_numberAxis;
