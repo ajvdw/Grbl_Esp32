@@ -9,6 +9,7 @@ namespace Machine {
         handler.item("acceleration", _acceleration);
         handler.item("max_travel", _maxTravel);
         handler.item("soft_limits", _softLimits);
+        handler.section("endstops", _endstops);
 
         handler.section("homing", _homing);
 
