@@ -417,22 +417,27 @@ void limits_init() {
         }
         for (int gang_index = 0; gang_index < 2; gang_index++) {
             auto gangConfig = axes->_axis[axis]->_gangs[gang_index];
-            if (gangConfig->_endstops != nullptr && gangConfig->_endstops->_limitAll.defined()) {
+            if (gangConfig->_endstops != nullptr && (gangConfig->_endstops->_limitAll.defined() || gangConfig->_endstops->_limitNeg.defined() ||
+                                                     gangConfig->_endstops->_limitPos.defined())) {
                 if (!limitAxes) {
                     info_serial("Initializing endstops...");
                 }
                 bitnum_true(limitAxes, axis);
 
-                Pin& pin = gangConfig->_endstops->_limitAll;
+                if (gangConfig->_endstops->_limitAll.defined()) {
+                    Pin& pin = gangConfig->_endstops->_limitAll;
 
-                info_serial("%s limit on %s", reportAxisNameMsg(axis, gang_index), pin.name().c_str());
+                    info_serial("%s limit_all on %s", reportAxisNameMsg(axis, gang_index), pin.name().c_str());
 
-                pin.setAttr(Pin::Attr::Input | Pin::Attr::ISR);
-                if (gangConfig->_endstops->_hardLimits) {
-                    pin.attachInterrupt(isr_limit_switches, CHANGE, nullptr);
-                } else {
-                    pin.detachInterrupt();
+                    pin.setAttr(Pin::Attr::Input | Pin::Attr::ISR);
+                    if (gangConfig->_endstops->_hardLimits) {
+                        pin.attachInterrupt(isr_limit_switches, CHANGE, nullptr);
+                    } else {
+                        pin.detachInterrupt();
+                    }
                 }
+
+                /// !!! Need to pick up the neg and pos switches
             }
         }
     }
